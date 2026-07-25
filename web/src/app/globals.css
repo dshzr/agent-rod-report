@@ -43,6 +43,7 @@
 html,
 body {
   height: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -1054,5 +1055,42 @@ textarea {
 
   .dock__note {
     display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .turn {
+    grid-template-columns: 1.85rem minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+
+  .avatar {
+    width: 1.85rem;
+    height: 1.85rem;
+  }
+
+  .chart-card__header {
+    padding: 12px 12px 4px;
+    gap: 0.5rem;
+  }
+
+  .chart-card__actions {
+    gap: 0.3rem;
+  }
+
+  .chart-card__btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .chart-card__btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .welcome__mark {
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-bottom: 0.85rem;
   }
 }
