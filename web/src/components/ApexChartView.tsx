@@ -41,11 +41,33 @@ const TYPE_LABELS: Record<string, string> = {
 
 const CIRCULAR = new Set(['pie', 'donut', 'radialBar', 'polarArea']);
 
-function chartHeight(type: string, expanded: boolean): number {
+function chartHeight(
+  type: string,
+  expanded: boolean,
+  horizontalCategoryCount = 0,
+): number {
+  if (horizontalCategoryCount > 8) {
+    const grown = horizontalCategoryCount * 34;
+    return expanded
+      ? Math.min(Math.max(grown, 560), 900)
+      : Math.min(Math.max(grown, 380), 640);
+  }
   if (expanded) return CIRCULAR.has(type) ? 420 : 560;
   if (CIRCULAR.has(type)) return 320;
   if (type === 'radar' || type === 'treemap') return 340;
   return 380;
+}
+
+/** Categorias demais espremem barras/linhas em telas estreitas — melhor
+ * rolar horizontalmente com largura mínima por categoria do que encolher tudo. */
+function minPlotWidth(
+  type: string,
+  categoryCount: number,
+  horizontal: boolean,
+): number | undefined {
+  if (CIRCULAR.has(type) || horizontal || categoryCount <= 7) return undefined;
+  const perCategory = type === 'bar' ? 64 : 56;
+  return categoryCount * perCategory;
 }
 
 const FALLBACK_COLORS = [
@@ -224,9 +246,22 @@ export function ApexChartView({ title, apex }: Props) {
   const chartType = String(options.chart?.type ?? 'bar');
   const type = chartType === 'column' ? 'bar' : chartType;
   const typeLabel = TYPE_LABELS[chartType] ?? TYPE_LABELS[type] ?? 'Gráfico';
-  const height = chartHeight(type, expanded);
 
   const merged = useMemo(() => eaceChrome(options, type), [options, type]);
+
+  const horizontal = Boolean(
+    (merged.plotOptions as { bar?: { horizontal?: boolean } } | undefined)?.bar
+      ?.horizontal,
+  );
+  const categoryCount = Array.isArray(merged.xaxis?.categories)
+    ? merged.xaxis.categories.length
+    : 0;
+  const height = chartHeight(
+    type,
+    expanded,
+    horizontal ? categoryCount : 0,
+  );
+  const minWidth = minPlotWidth(type, categoryCount, horizontal);
   const chartOptions = useMemo(
     () => ({
       ...merged,
@@ -355,13 +390,15 @@ export function ApexChartView({ title, apex }: Props) {
               : undefined
           }
         >
-          <ReactApexChart
-            options={chartOptions}
-            series={series}
-            type={type}
-            height={height}
-            width="100%"
-          />
+          <div style={minWidth ? { minWidth } : undefined}>
+            <ReactApexChart
+              options={chartOptions}
+              series={series}
+              type={type}
+              height={height}
+              width="100%"
+            />
+          </div>
         </div>
 
         {(type === 'line' || type === 'area') && (
